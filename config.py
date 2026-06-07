@@ -8,7 +8,7 @@ load_dotenv()
 
 # ─── API Keys ────────────────────────────────────────────────────
 GEMINI_API_KEY    = os.getenv("GEMINI_API_KEY", "")
-GEMINI_MODEL      = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
+GEMINI_MODEL      = os.getenv("GEMINI_MODEL", "gemini-2.5-flash-lite")
 
 # ─── Model Settings ──────────────────────────────────────────────
 MAX_AGENT_ITERS   = 6       # max ReAct / function-calling loop iterations
