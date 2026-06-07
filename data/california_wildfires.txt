@@ -1,0 +1,9 @@
+Disaster Profile: California Wildfires (2025-2026)
+Location: Northern and Southern California, United States.
+Event Type: Severe Wildfire / Forest Fire.
+Anomalies Detected: Wind speeds exceeded seasonal averages by 45%. Extreme drought conditions and record-high temperatures created an immediate flash-drying effect on vegetation.
+Historical Similarity: Matches 88% of the risk profile of the 2018 Camp Fire and 2021 Dixie Fire in terms of rapid rate of spread and fuel density.
+Crisis Management Recommendations: 
+1. Evacuation Protocols: Establish immediate mandatory evacuation zones within a 10km radius of the ignition points.
+2. Resource Allocation: Deploy 15 additional air-tanker units and prioritize structural defense for residential lines.
+3. Media Verification: Monitor social media reports; verify local citizen claims of containment using real-time NASA EONET thermal imaging.
