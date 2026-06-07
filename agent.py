@@ -6,9 +6,11 @@ disaster feeds, historical RAG search, ML risk analysis), the SDK executes
 them, and the final natural-language answer is returned.
 """
 import logging
+import time
 
 from google import genai
 from google.genai import types
+from google.genai.errors import ServerError, ClientError
 
 from config import GEMINI_API_KEY, GEMINI_MODEL, MAX_TOKENS
 from tools import ALL_TOOLS
@@ -77,11 +79,27 @@ class DisasterGuardAgent:
     def run(self, user_message: str, session_id: str = "default") -> str:
         """Process a user message and return the agent's final text response."""
         chat = self._get_chat(session_id)
-        try:
-            response = chat.send_message(user_message)
-            return response.text
-        except Exception as e:
-            logger.exception(f"Agent run failed for session {session_id}: {e}")
-            # Drop the broken chat session so the next message starts fresh.
-            self._chats.pop(session_id, None)
-            return "DisasterGuard is temporarily unavailable. Please try again."
+        retry_delays = (2, 5)  # seconds — Gemini's "high demand" 503s are usually brief
+        for attempt, delay in enumerate((*retry_delays, None)):
+            try:
+                response = chat.send_message(user_message)
+                return response.text
+            except ServerError as e:
+                if delay is not None and e.code == 503:
+                    logger.warning(f"Gemini overloaded (503) for session {session_id}, retrying in {delay}s...")
+                    time.sleep(delay)
+                    continue
+                logger.exception(f"Agent run failed for session {session_id}: {e}")
+                self._chats.pop(session_id, None)
+                return "DisasterGuard is temporarily unavailable (Gemini is under high demand). Please try again in a moment."
+            except ClientError as e:
+                logger.exception(f"Agent run failed for session {session_id}: {e}")
+                self._chats.pop(session_id, None)
+                if e.code == 429:
+                    return "You've reached the AI's daily usage limit. Please try again later (quota resets every 24 hours)."
+                return "DisasterGuard is temporarily unavailable. Please try again."
+            except Exception as e:
+                logger.exception(f"Agent run failed for session {session_id}: {e}")
+                # Drop the broken chat session so the next message starts fresh.
+                self._chats.pop(session_id, None)
+                return "DisasterGuard is temporarily unavailable. Please try again."
