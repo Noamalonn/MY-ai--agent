@@ -1,0 +1,18 @@
+services:
+  - type: web             # web service — serves the chat UI + JSON API over HTTP
+    name: disasterguard-agent
+    runtime: python
+    region: oregon
+    plan: free            # free tier is enough for demo
+
+    buildCommand: pip install -r requirements.txt
+
+    startCommand: gunicorn app:app --bind 0.0.0.0:$PORT
+
+    envVars:
+      - key: GEMINI_API_KEY
+        sync: false       # set manually in the Render dashboard
+      - key: GEMINI_MODEL
+        value: gemini-2.5-flash
+      - key: PYTHON_VERSION
+        value: 3.11.9
