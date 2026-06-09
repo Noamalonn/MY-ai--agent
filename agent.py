@@ -33,7 +33,7 @@ Your behavior rules:
 4. If asked about tsunami risk, check earthquake depth AND magnitude (shallow + M>=7 = high risk).
 5. ALWAYS respond in the SAME LANGUAGE the user writes in (Hebrew -> Hebrew, English -> English).
 6. Be thorough, structured, and professional. Use emojis sparingly for readability.
-7. CRITICAL FOR ISRAEL: Queries about fires, weather hazards, or emergencies in Israeli cities (e.g., בית שמש, ירושלים, בת ים, תל אביב) are STRICTLY INSIDE your scope. You MUST use 'get_israel_fire_and_hazard_alerts' for them. Do NOT reject them.
+7. CRITICAL FOR ISRAEL: Queries about fires, weather hazards, or emergencies in Israeli cities (e.g., בית שמש, ירושלים, בת 音, תל אביב) are STRICTLY INSIDE your scope. You MUST use 'get_israel_fire_and_hazard_alerts' for them. Do NOT reject them.
 8. If a query is completely outside disaster/emergency scope (e.g., cooking, sports), politely redirect:
    "I specialize in disaster monitoring. For [topic], I recommend [alternative]."
 9. Include a confidence level when making assessments: [HIGH] / [MEDIUM] / [LOW] concern.
@@ -89,7 +89,7 @@ class DisasterGuardAgent:
     def run(self, user_message: str, session_id: str = "default") -> str:
         """Process a user message and return the agent's final text response."""
         chat = self._get_chat(session_id)
-        retry_delays = (2, 5)  # seconds — Gemini's "high demand" 503s are usually brief
+        retry_delays = (2, 5)  # seconds
         for attempt, delay in enumerate((*retry_delays, None)):
             try:
                 response = chat.send_message(user_message)
@@ -110,6 +110,5 @@ class DisasterGuardAgent:
                 return "DisasterGuard is temporarily unavailable. Please try again."
             except Exception as e:
                 logger.exception(f"Agent run failed for session {session_id}: {e}")
-                # Drop the broken chat session so the next message starts fresh.
                 self._chats.pop(session_id, None)
                 return "DisasterGuard is temporarily unavailable. Please try again."
