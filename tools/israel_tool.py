@@ -4,7 +4,12 @@ import urllib.parse
 
 def get_israel_fire_and_hazard_alerts(location: str) -> dict:
     """
-    Fetch real-time natural disaster, fire, and hazardous weather alerts for ANY specific location in Israel.
+    CRITICAL: Use this tool ONLY and ALWAYS when the user queries about any location, city, 
+    or event inside ISRAEL (e.g., 'בית שמש', 'ירושלים', 'תל אביב', 'בת ים').
+    Do NOT use global tools like NASA or GDACS for Israeli locations.
+    
+    Args:
+        location (str): The name of the city, region, or area in Israel.
     """
     loc = location.strip()
     
@@ -20,7 +25,7 @@ def get_israel_fire_and_hazard_alerts(location: str) -> dict:
             result = geo_res["results"][0]
             lat, lon = result["latitude"], result["longitude"]
             
-            # תיקון ה-URL: נבקש current=relative_humidity_2m כדי לקבל לחות בזמן אמת
+            # פנייה ל-API לקבלת מזג אוויר ולחות בזמן אמת
             weather_url = f"https://api.open-meteo.com/v1/forecast?latitude={lat}&longitude={lon}&current_weather=true&current=relative_humidity_2m"
             w_res = requests.get(weather_url, timeout=5).json()
             
@@ -29,7 +34,6 @@ def get_israel_fire_and_hazard_alerts(location: str) -> dict:
                 temp_raw = float(curr_w['temperature'])
                 wind_raw = float(curr_w['wind_speed'])
             
-            # תיקון השליפה של הלחות מתוך האובייקט 'current'
             if "current" in w_res and "relative_humidity_2m" in w_res["current"]:
                 humidity_raw = float(w_res["current"]["relative_humidity_2m"])
                 
@@ -75,4 +79,4 @@ def get_israel_fire_and_hazard_alerts(location: str) -> dict:
         },
         "is_anomaly_detected": False,
         "source": "Israel Emergency Services Central Monitor"
-    }
+    } 
