@@ -20,15 +20,19 @@ def get_israel_fire_and_hazard_alerts(location: str) -> dict:
             result = geo_res["results"][0]
             lat, lon = result["latitude"], result["longitude"]
             
-            weather_url = f"https://api.open-meteo.com/v1/forecast?latitude={lat}&longitude={lon}&current_weather=true&relative_humidity_2m=true"
+            # תיקון ה-URL: נבקש current=relative_humidity_2m כדי לקבל לחות בזמן אמת
+            weather_url = f"https://api.open-meteo.com/v1/forecast?latitude={lat}&longitude={lon}&current_weather=true&current=relative_humidity_2m"
             w_res = requests.get(weather_url, timeout=5).json()
             
             if w_res.get("current_weather"):
-                curr = w_res["current_weather"]
-                temp_raw = float(curr['temperature'])
-                wind_raw = float(curr['wind_speed'])
-                if "hourly" in w_res and "relative_humidity_2m" in w_res["hourly"]:
-                    humidity_raw = float(w_res["hourly"]["relative_humidity_2m"][0])
+                curr_w = w_res["current_weather"]
+                temp_raw = float(curr_w['temperature'])
+                wind_raw = float(curr_w['wind_speed'])
+            
+            # תיקון השליפה של הלחות מתוך האובייקט 'current'
+            if "current" in w_res and "relative_humidity_2m" in w_res["current"]:
+                humidity_raw = float(w_res["current"]["relative_humidity_2m"])
+                
     except Exception:
         pass
 
