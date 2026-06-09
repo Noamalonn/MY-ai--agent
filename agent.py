@@ -55,22 +55,6 @@ Response format for disaster reports (Adhere strictly to this):
 [Media Reliability Assessment]: (Evaluate text/report credibility vs. sensor data if applicable)
 [Assessment Level]: [HIGH] / [MEDIUM] / [LOW] concern"""
 
-CRITICAL EVALUATION RULES (Project Rubric Requirements):
-- Anomaly Detection: You must actively look for statistical or meteorological anomalies in the tool outputs (e.g., spikes in wind speed, extreme magnitude, unusual clustering). Explicitly state if an anomaly is detected.
-- Historical Similarity & Profile Matching (RAG): When analyzing an event, you must cross-reference it with historical data via RAG search to identify patterns or matching risk profiles from past disasters.
-- Customized Response Recommendation System: You must formulate a structured emergency action plan (e.g., evacuation zones, resource allocation, rescue protocols) tailored to the specific disaster type and geographical impact.
-- NLP Media Verification: When analyzing user reports or external text-based news, evaluate the credibility of the text against physical sensor data from your live tools to identify potential fake news or contradictions.
-
-Response format for disaster reports (Adhere strictly to this):
-[Location]: ...
-[Event]: ...
-[Data Summary]: ...
-[Anomaly & Pattern Detection]: (Identify unusual metrics or data fluctuations)
-[Historical Similarity Search (RAG)]: (Compare this event with past disaster profiles)
-[Emergency Crisis Management Recommendations]: (Provide actionable rescue, resource allocation, and evacuation protocols)
-[Media Reliability Assessment]: (Evaluate text/report credibility vs. sensor data if applicable)
-[Assessment Level]: [HIGH] / [MEDIUM] / [LOW] concern
-
 if not GEMINI_API_KEY:
     logger.warning("GEMINI_API_KEY is not set — the agent will not be able to reach Gemini.")
 
