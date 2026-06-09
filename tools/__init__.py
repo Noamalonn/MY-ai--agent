@@ -11,7 +11,7 @@ TOOL_REGISTRY = {
     "get_earthquakes":                   get_earthquakes,
     "get_nasa_events":                   get_nasa_events,
     "search_historical_events":          search_historical_events,
-    "get_israel_fire_and_hazard_alerts": get_israel_fire_and_hazard_alerts  #
+    "get_israel_fire_and_hazard_alerts": get_israel_fire_and_hazard_alerts
 }
 
 # Gemini consumes plain Python callables directly as tools.
