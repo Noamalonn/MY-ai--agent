@@ -25,3 +25,5 @@ EVENTS_DB_PATH    = "data/events_db.json"
 # ─── Thresholds ──────────────────────────────────────────────────
 ANOMALY_THRESHOLD = -0.1    # Isolation Forest scores below this → anomaly
 TOP_K_SIMILAR     = 5       # how many similar historical events to retrieve
+# ─── Israel Monitoring Settings ──────────────────────────────────
+ISRAEL_DEFAULT_LOCATION = "בית שמש" 
