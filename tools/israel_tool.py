@@ -1,82 +1,90 @@
 import requests
 import datetime
 import urllib.parse
+import pandas as pd
+import os
 
 def get_israel_fire_and_hazard_alerts(location: str) -> dict:
     """
     CRITICAL: Use this tool ONLY and ALWAYS when the user queries about any location, city, 
-    or event inside ISRAEL (e.g., 'בית שמש', 'ירושלים', 'תל אביב', 'בת ים').
-    Do NOT use global tools like NASA or GDACS for Israeli locations.
-     
-    Args:
-        location (str): The name of the city, region, or area in Israel.
+    or event inside ISRAEL (e.g., 'בית שמש', 'ירושלים', 'תל אביב', 'ישראל').
     """
-    loc = location.strip()
-     
-    # 1. שליפת קואורדינטות ומזג אוויר אמיתי מתוך ה-API (Open-Meteo)
+    loc = location.strip().replace('"', '').replace("'", "")
+    
+    # 1. שליפת מזג אוויר וקואורדינטות בסיסיות (למקרה שאין אירוע)
     geo_url = f"https://geocoding-api.open-meteo.com/v1/search?name={urllib.parse.quote(loc)}&count=1&language=en"
-     
     lat, lon = 31.7683, 35.2137 
     temp_raw, wind_raw, humidity_raw = 25.0, 15.0, 50.0
-     
+    
     try:
         geo_res = requests.get(geo_url, timeout=5).json()
         if geo_res.get("results"):
             result = geo_res["results"][0]
             lat, lon = result["latitude"], result["longitude"]
-             
-            # פנייה ל-API לקבלת מזג אוויר ולחות בזמן אמת
+            
             weather_url = f"https://api.open-meteo.com/v1/forecast?latitude={lat}&longitude={lon}&current_weather=true&current=relative_humidity_2m"
             w_res = requests.get(weather_url, timeout=5).json()
-             
+            
             if w_res.get("current_weather"):
                 curr_w = w_res["current_weather"]
                 temp_raw = float(curr_w['temperature'])
                 wind_raw = float(curr_w['wind_speed'])
-             
+            
             if "current" in w_res and "relative_humidity_2m" in w_res["current"]:
                 humidity_raw = float(w_res["current"]["relative_humidity_2m"])
-                 
     except Exception:
         pass
 
-    is_forested = any(keyword in loc for keyword in ["יער", "חורש", "בראשית", "אשתאול", "כרמל"])
-     
-    # 2. הזרקת האנומליה המתוחכמת (לתרחיש השריפה בהצגה!)
-    if "שריפה" in loc or loc in ["בית שמש", "בת ים", "ירושלים", "יער בראשית"]:
-        simulated_temp = round(temp_raw + 8.5, 1)      
-        simulated_humidity = max(8, round(humidity_raw - 35)) 
-        simulated_wind = round(wind_raw + 15.0, 1)     
-         
+    # 2. פתיחת קובץ האקסל מתיקיית הנתונים
+    excel_path = 'data/DisasterGuard_Events_Database_v4.xlsx'
+    active_event = None
+    
+    if os.path.exists(excel_path):
+        try:
+            df = pd.read_excel(excel_path)
+            
+            # אם המשתמש שואל בכללי על "ישראל" או "ארץ" -> נציף את תרחיש בית שמש
+            if any(word in loc for word in ["ישראל", "ארץ", "israel", "Israel"]):
+                # שולף את השורה של בית שמש מהאקסל
+                city_matches = df[df["עיר"] == "בית שמש"]
+                if not city_matches.empty:
+                    active_event = city_matches.iloc[0]
+            else:
+                # חיפוש לפי עיר ספציפית שהמשתמש הקליד
+                city_matches = df[df["עיר"].str.contains(loc, na=False)]
+                if not city_matches.empty:
+                    active_event = city_matches.iloc[0]
+                    
+        except Exception as e:
+            print(f"Error reading Excel: {e}")
+
+    # 3. אם מצאנו אירוע תואם באקסל -> נחזיר לאייג'נט את כל הפירוט!
+    if active_event is not None:
         return {
-            "status": "ACTIVE_FIRE_ALERT",
-            "event_type": "שריפת חורש פעילה" if is_forested else "שריפת מבנה ותשתיות באזור עירוני",
-            "requested_location": loc,
-            "coordinates": f"{lat}, {lon}",
-            "timestamp": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-            "environmental_data": {
-                "temperature": f"{simulated_temp}°C",
-                "wind_speed": f"{simulated_wind} km/h",
-                "humidity": f"{simulated_humidity}%"
-            },
-            "is_anomaly_detected": True, 
-            "anomaly_reason": f"Spike in temperature (+8.5°C) and critical drop in humidity ({simulated_humidity}%) relative to seasonal baseline.",
-            "infrastructure_risk": "סיכון מוגבר לחסימת צירי תנועה מרכזיים וקירבה לקווי מתח קריטיים של חברת החשמל." if is_forested else "סיכון קריטי לקריסת מבנים, ניתוקי חשמל מקומיים וסכנה מיידית למערכות וצוברי גז עירוניים.",
-            "population_density": "נמוכה עד בינונית (שטח פתוח/מטיילים)" if is_forested else "גבוהה מאוד (אזור מגורים מאוכלס בצפיפות, נדרש פינוי מובנה).",
-            "source": "Israel Emergency Services & Weather Anomaly Detector"
+            "status": "ACTIVE_DISASTER_ALERT",
+            "event_type": active_event.get("סוג אירוע", "שריפה"),
+            "city": active_event.get("עיר", loc),
+            "exact_location": active_event.get("מיקום מדויק", "לא ידוע"),
+            "scale_and_size": active_event.get("היקף האירוע", "לא צוין"),
+            "population_details": active_event.get("אזור מאוכלס?", "לא צוין"),
+            "infrastructure_risk": active_event.get("אזור עם תשתיות?", "לא צוין"),
+            "fire_station_address": active_event.get("כתובת מדויקת - תחנת כיבוי אש", "לא צוין"),
+            "mada_station_address": active_event.get("כתובת מדויקת - תחנת מד״א", "לא צוין"),
+            "weather_during_event": active_event.get("מזג אוויר בעת האירוע", "לא צוין"),
+            "weather_anomaly": active_event.get("חריגות טמפרטורה (אירוע מול שגרה)", "לא צוין"),
+            "agent_instruction": "The user is asking about this event. Provide them with these EXACT details naturally in Hebrew."
         }
-         
-    # תרחיש שקט - אין שריפה (לסעיף 7 במחוון - אי זיהוי אירוע)
+        
+    # 4. אם לא נמצאה התאמה באקסל, נחזיר מצב שגרה
     return {
         "status": "CLEAR",
         "requested_location": loc,
         "coordinates": f"{lat}, {lon}",
-        "message": f"לא זוהו אנומליות תרמיות או דיווחי שריפה פעילים בזמן אמת במיקום: {loc}.",
+        "message": f"לא זוהו דיווחי חירום או אנומליות תרמיות מתוך יומן האירועים עבור: {loc}.",
         "environmental_data": {
             "temperature": f"{temp_raw}°C",
             "wind_speed": f"{wind_raw} km/h",
             "humidity": f"{humidity_raw}%"
         },
-        "is_anomaly_detected": False,
-        "source": "Israel Emergency Services Central Monitor"
+        "source": "Israel Emergency Services Database"
     }
